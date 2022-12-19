@@ -25,7 +25,7 @@ class CheckViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
         point = data.get("point", None)
-        order = {}  # TODO : make it json
+        order = data.get("order", {})
         checks = Check.objects.filter(point=point)
 
         for check in checks:
@@ -63,3 +63,5 @@ class CheckViewSet(viewsets.ModelViewSet):
                 {"check": "Принтер не знайдено"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+    
