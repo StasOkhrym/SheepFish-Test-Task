@@ -1,5 +1,7 @@
-from django.http import JsonResponse
 from rest_framework import viewsets, status
+from rest_framework.response import Response
+
+from SheepFish_test_task.celery import app
 from bill_service.serializers import (
     PointSerializer,
     PrinterSerializer,
@@ -30,7 +32,7 @@ class CheckViewSet(viewsets.ModelViewSet):
 
         for check in checks:
             if check["order_id"] == order["order_id"]:
-                return JsonResponse(
+                return Response(
                     {"order": "Таке замовлення вже існує"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
@@ -44,7 +46,8 @@ class CheckViewSet(viewsets.ModelViewSet):
                         "status": data.get("status", "new"),
                         "order": order,
                     }
-                    Check.objects.create(**attrs)
+                    check_for_print = Check.objects.create(**attrs)
+                    app.send_task("bill_service.tasks.render_pdf_kitchen", check_for_print)
                 else:
                     attrs = {
                         "printer": printer,
@@ -52,14 +55,15 @@ class CheckViewSet(viewsets.ModelViewSet):
                         "status": data.get("status", "new"),
                         "order": order,
                     }
-                    Check.objects.create(**attrs)
+                    check_for_print = Check.objects.create(**attrs)
+                    app.send_task("bill_service.tasks.render_pdf_client", check_for_print)
 
-            return JsonResponse(
+            return Response(
                 {"check": "Чек успішно створено"},
                 status=status.HTTP_201_CREATED,
             )
         else:
-            return JsonResponse(
+            return Response(
                 {"check": "Принтер не знайдено"},
                 status=status.HTTP_404_NOT_FOUND,
             )

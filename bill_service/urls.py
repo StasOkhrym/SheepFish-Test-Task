@@ -1,5 +1,5 @@
 from django.urls import path, include
-from views import PointViewSet, PrinterViewSet, CheckViewSet
+from .views import PointViewSet, PrinterViewSet, CheckViewSet
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
